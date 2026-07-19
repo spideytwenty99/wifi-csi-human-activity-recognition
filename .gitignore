@@ -25,3 +25,9 @@ Thumbs.db
 
 # Logs
 *.log
+
+# Dataset
+data/csv/*.csv
+
+# Keep the placeholder file
+!data/csv/.gitkeep
