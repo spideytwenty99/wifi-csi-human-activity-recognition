@@ -10,9 +10,62 @@ This project investigates the use of Wi-Fi CSI signals for recognizing indoor hu
 
 Several classical machine learning and deep learning models are implemented and evaluated using the same dataset and preprocessing pipeline.
 
-The project was developed as part of a Bachelor's thesis.
 
 ---
+## 📊 Dataset
+
+This project uses the **Experiment 3** dataset from the paper:
+
+> **Schäfer, J., Barrsiwal, B. R., Kokhkharova, M., Adil, H., & Liebehenschel, J. (2021). _Human Activity Recognition Using CSI Information with Nexmon_. Applied Sciences, 11(19), 8860.**
+
+The dataset contains **WiFi Channel State Information (CSI) amplitude measurements** collected in a controlled indoor **Line-of-Sight (LOS)** environment using commodity WiFi devices and the **Nexmon CSI framework**.
+
+For this project, the **Experiment 3** dataset was selected because it provides preprocessed CSI amplitude data in CSV format, making it suitable for evaluating machine learning and deep learning models for Human Activity Recognition (HAR).
+
+### Activities
+
+The dataset consists of five activity classes:
+
+- Empty
+- Lying
+- Sitting
+- Standing
+- Walking
+
+Each CSV file represents one recorded WiFi CSI sample and contains:
+
+- **500 CSI packets**
+- **256 subcarriers**
+- CSI amplitude values
+
+---
+
+### Dataset Source
+
+**Paper**
+
+Schäfer, J., Barrsiwal, B. R., Kokhkharova, M., Adil, H., & Liebehenschel, J. (2021). *Human Activity Recognition Using CSI Information with Nexmon*. Applied Sciences, 11(19), 8860.
+
+DOI: https://doi.org/10.3390/app11198860
+
+**Official Dataset**
+
+DOI: https://doi.org/10.21227/xr6j-0255
+
+---
+
+### Dataset Availability
+
+The dataset is **not included** in this repository due to its size (approximately **550 MB**).
+
+After downloading the dataset from the official source, place all CSV files inside:
+
+```text
+data/
+└── csv/
+```
+
+The project expects all CSV files to be located in this directory before running the preprocessing and training pipeline.
 
 ## 🎯 Objectives
 
