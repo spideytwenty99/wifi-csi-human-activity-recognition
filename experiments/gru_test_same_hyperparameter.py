@@ -138,7 +138,7 @@ class GRUModel:
         ax2.legend()
 
         plt.tight_layout()
-        plt.savefig("gru_same_hyperparemter_LSTM.png", dpi=150)
+        plt.savefig("../results/gru_same_hyperparemter_LSTM.png", dpi=150)
         plt.close()
 
         print("Training Kurven gespeichert: gru_training_curves.png")
