@@ -1,3 +1,24 @@
+"""
+LSTM Model Module for HAR (Human Activity Recognition)
+
+This module implements an LSTM (Long Short-Term Memory) model for classifying
+human activities from WiFi CSI time series data.
+
+LSTM Overview:
+A normal perceptron has no memory — each input is treated independently.
+For time series data, this is a problem: to recognize walking, you need
+not just the current signal value but also the values from previous timesteps.
+
+LSTM has 2 types of memory:
+  - Cell State: Long-term memory that flows through the entire sequence
+  - Hidden State: Short-term memory (output of the current timestep)
+
+And three gates that control what is remembered and forgotten:
+  - Forget Gate: Which old information should be deleted?
+  - Input Gate: Which new information should be stored?
+  - Output Gate: What should be passed to the next timestep?
+"""
+
 import numpy as np
 import time
 import matplotlib.pyplot as plt
@@ -9,42 +30,48 @@ from tensorflow.keras.layers import LSTM, Dense, Input
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping
 
-"""
-LSTM (Long Short-Term Memory)
-Ein normales Perceptron hat kein Gedächtnis — jede Eingabe wird unabhängig behandelt.
-Bei Zeitreihen ist das ein Problem: Um Gehen zu erkennen, braucht man nicht nur den
-aktuellen Signalwert, sondern auch die Werte der letzten Zeitschritte.
-
-LSTM hat 2 Gedächtnisse:
-  Cell State   → Langzeitgedächtnis (geht durch die ganze Sequenz)
-  Hidden State → Kurzzeitgedächtnis (Ausgabe des aktuellen Zeitschritts)
-
-Und drei Gates die kontrollieren was erinnert und vergessen wird:
-  Forget Gate → Welche alten Informationen werden gelöscht?
-  Input Gate  → Welche neuen Informationen werden gespeichert?
-  Output Gate → Was wird an den nächsten Zeitschritt weitergegeben?
-"""
-
 tf.random.set_seed(42)
 
 
 class PrintEvery10Epochs(tf.keras.callbacks.Callback):
-    """Gibt Training-Metriken alle 10 Epochen aus — während des Trainings."""
+    """
+    Custom callback that prints training metrics every 10 epochs.
+
+    Provides visibility into training progress without overwhelming output.
+    """
+
     def on_epoch_end(self, epoch, logs=None):
         if (epoch + 1) % 10 == 0:
             total = self.params['epochs']
-            print(f"Epoch {epoch+1}/{total} - "
+            print(f"Epoch {epoch + 1}/{total} - "
                   f"Train Loss: {logs['loss']:.4f} | "
                   f"Val Loss: {logs['val_loss']:.4f} | "
-                  f"Train Acc: {logs['accuracy']*100:.1f}% | "
-                  f"Val Acc: {logs['val_accuracy']*100:.1f}%")
+                  f"Train Acc: {logs['accuracy'] * 100:.1f}% | "
+                  f"Val Acc: {logs['val_accuracy'] * 100:.1f}%")
 
 
 class LSTMModel:
+    """
+    LSTM Model for HAR classification.
+
+    This model uses a single LSTM layer to process time series data
+    and capture long-term dependencies for activity recognition.
+    """
 
     def __init__(self, input_shape=(500, 256), hidden_size=64, num_classes=5,
                  learning_rate=0.005, epochs=200, batch_size=32, patience=20):
+        """
+        Initialize the LSTM model with specified hyperparameters.
 
+        Args:
+            input_shape (tuple): Shape of input data (timesteps, features)
+            hidden_size (int): Number of LSTM units
+            num_classes (int): Number of output classes
+            learning_rate (float): Learning rate for Adam optimizer
+            epochs (int): Maximum number of training epochs
+            batch_size (int): Batch size for training
+            patience (int): Early stopping patience
+        """
         self.epochs = epochs
         self.batch_size = batch_size
         self.patience = patience
@@ -52,35 +79,43 @@ class LSTMModel:
         self.inference_time = None
         self.history = None
 
-        # Modell aufbauen
+        # Build the model architecture
         self.model = Sequential([
-            LSTM(hidden_size, input_shape=input_shape),  # LSTM-Schicht mit 64 Neuronen
-            Dense(num_classes, activation='softmax')     # Ausgabeschicht: Score pro Klasse
+            # LSTM layer with hidden_size units
+            LSTM(hidden_size, input_shape=input_shape),
+
+            # Output layer: softmax for probability distribution over classes
+            Dense(num_classes, activation='softmax')
         ])
 
+        # Compile the model
         self.model.compile(
-            optimizer=Adam(learning_rate=learning_rate),  # Adam passt Gewichte an
-            loss='sparse_categorical_crossentropy',        # Verlustfunktion für Klassifikation
+            optimizer=Adam(learning_rate=learning_rate),
+            loss='sparse_categorical_crossentropy',
             metrics=['accuracy']
         )
 
-
-    #############
-    # Training
-    #############
-
     def train(self, X_train, y_train):
-        # 20% der Trainingsdaten als Validierungsset
+        """
+        Train the LSTM model on the provided data.
+
+        Args:
+            X_train (np.ndarray): Training data
+            y_train (np.ndarray): Training labels
+        """
+        # Split training data for validation (20% for validation)
         X_tr, X_val, y_tr, y_val = train_test_split(
             X_train, y_train, test_size=0.2, random_state=42
         )
 
+        # Early stopping callback
         early_stop = EarlyStopping(
             monitor='val_loss',
             patience=self.patience,
-            restore_best_weights=True  # stellt die besten Gewichte wieder her
+            restore_best_weights=True
         )
 
+        # Train the model
         start = time.time()
         self.history = self.model.fit(
             X_tr, y_tr,
@@ -92,57 +127,85 @@ class LSTMModel:
         )
         self.training_time = time.time() - start
 
+        # Display training completion information
         actual_epochs = len(self.history.history['loss'])
         if actual_epochs < self.epochs:
-            print(f"\nEarly Stopping bei Epoch {actual_epochs}")
-        print(f"LSTM Training abgeschlossen in {self.training_time:.4f} Sekunden")
+            print(f"\nEarly Stopping at Epoch {actual_epochs}")
 
-
-    #################
-    # History plotten
-    #################
+        print(f"LSTM Training completed in {self.training_time:.4f} seconds")
 
     def plot_history(self):
+        """
+        Plot and save training history curves.
+
+        Creates two side-by-side plots showing loss and accuracy
+        for both training and validation sets.
+        """
         h = self.history.history
         epochs = range(1, len(h['loss']) + 1)
 
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
 
-        ax1.plot(epochs, h['loss'],     label='Train Loss')
-        ax1.plot(epochs, h['val_loss'], label='Val Loss')
-        ax1.set_title('Train Loss vs Val Loss')
+        # Loss plot
+        ax1.plot(epochs, h['loss'], label='Train Loss', linewidth=2)
+        ax1.plot(epochs, h['val_loss'], label='Val Loss', linewidth=2)
+        ax1.set_title('Train Loss vs Val Loss', fontweight='bold')
         ax1.set_xlabel('Epoch')
+        ax1.set_ylabel('Loss')
         ax1.legend()
+        ax1.grid(True, alpha=0.3)
 
-        ax2.plot(epochs, h['accuracy'],     label='Train Acc')
-        ax2.plot(epochs, h['val_accuracy'], label='Val Acc')
-        ax2.set_title('Train Accuracy vs Val Accuracy')
+        # Accuracy plot
+        ax2.plot(epochs, h['accuracy'], label='Train Acc', linewidth=2)
+        ax2.plot(epochs, h['val_accuracy'], label='Val Acc', linewidth=2)
+        ax2.set_title('Train Accuracy vs Val Accuracy', fontweight='bold')
+        ax2.set_xlabel('Epoch')
+        ax2.set_ylabel('Accuracy')
         ax2.legend()
+        ax2.grid(True, alpha=0.3)
 
         plt.tight_layout()
         plt.savefig('lstm_training_curves.png', dpi=150)
         plt.close()
-        print("Training Kurven gespeichert: lstm_training_curves.png")
 
-
-    ###############
-    # Vorhersage
-    ###############
+        print("Training curves saved: lstm_training_curves.png")
 
     def predict(self, X_test):
+        """
+        Generate predictions for test data.
+
+        Args:
+            X_test (np.ndarray): Test data
+
+        Returns:
+            np.ndarray: Predicted class labels
+        """
         start = time.time()
-        raw = self.model.predict(X_test, verbose=0)  # gibt Wahrscheinlichkeiten pro Klasse zurück
+        # Get probability distribution over classes
+        probabilities = self.model.predict(X_test, verbose=0)
         self.inference_time = time.time() - start
-        print(f"LSTM Vorhersage abgeschlossen in {self.inference_time:.4f} Sekunden")
-        return np.argmax(raw, axis=1)  # Index mit höchster Wahrscheinlichkeit = vorhergesagte Klasse
 
+        print(f"LSTM Inference completed in {self.inference_time:.4f} seconds")
 
-    #################
-    # Auswertung
-    #################
+        # Return the class with highest probability
+        return np.argmax(probabilities, axis=1)
 
     def evaluate(self, X_test, y_test):
+        """
+        Evaluate model performance on test data.
+
+        Args:
+            X_test (np.ndarray): Test data
+            y_test (np.ndarray): True labels
+
+        Returns:
+            tuple: (accuracy, predictions)
+                - accuracy (float): Test accuracy as a fraction
+                - predictions (np.ndarray): Predicted class labels
+        """
         predictions = self.predict(X_test)
         accuracy = accuracy_score(y_test, predictions)
+
         print(f"LSTM Accuracy: {accuracy * 100:.2f}%")
+
         return accuracy, predictions

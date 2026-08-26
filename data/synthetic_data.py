@@ -1,83 +1,242 @@
 import numpy as np
 
-#constants
-N_SAMPLES = 300 #100 messungen pro aktivitaet
-TIMESTEPS = 50 #jede Messung hat 50 Zeitschritte (50 aufeinanderfolgende CSI Werte)
-
 # =======================
-# Datengenerierung
+# Constants
 # =======================
 
-#Wir generieren 3 klassen von synthetischen CSI Daten: Keine Bewegung, Gehen und Winken
+N_SAMPLES = 300     # Number of samples per activity
+TIMESTEPS = 50      # Number of time steps per sample
 
+
+"""
+Synthetic CSI Data Generator
+
+This module generates three classes of synthetic CSI-like signals:
+
+Class 0 - No Movement
+    Stable signal with only small random noise.
+
+Class 1 - Walking
+    Regular sinusoidal oscillation representing a walking pattern.
+
+Class 2 - Waving
+    Faster oscillations with larger amplitudes representing
+    rapid hand movements.
+"""
+
+
+# =======================
+# Class 0 - No Movement
+# =======================
 
 def generate_class0(n, t):
     """
-     Klasse 0: Keine Bewegung
-     → Signal bleibt stabil, nur leichtes Rauschen
-     n = wie viele samples, t = wie viele zeitschritte
+    Generate samples for Class 0 (No Movement).
+
+    The signal remains mostly stable around a constant value,
+    with only small random noise added.
+
+    Parameters
+    ----------
+    n : int
+        Number of samples to generate.
+    t : int
+        Number of time steps per sample.
+
+    Returns
+    -------
+    np.ndarray
+        Generated signals.
     """
-    data = [] # leere Liste, hier werden die Signale gesammelt
-    for _ in range(n): #generiert n samples (signnal) bestehend aus Mittelwert + noise
-        noise = np.random.normal(0, 0.1, t) #kleines Rauschen
-        signal = 1.0 + noise #stabiler Mkttelwert bei 1.0
+    data = []
+
+    for _ in range(n):
+        noise = np.random.normal(0, 0.1, t)
+        signal = 1.0 + noise
+
         data.append(signal)
+
     return np.array(data)
 
+
+# =======================
+# Class 1 - Walking
+# =======================
 
 def generate_class1(n, t):
     """
-    Klasse 1: Gehen
-    → Regelmäßige, rhythmische Sinusschwingung (Schrittfrequenz)
+    Generate samples for Class 1 (Walking).
+
+    The signal follows a regular sinusoidal pattern with
+    slight variations in frequency and added noise.
+
+    Parameters
+    ----------
+    n : int
+        Number of samples to generate.
+    t : int
+        Number of time steps per sample.
+
+    Returns
+    -------
+    np.ndarray
+        Generated signals.
     """
     data = []
+
     for _ in range(n):
-        time = np.linspace(0, 2 * np.pi, t) # erzeugt t gleichmäßig verteilte Zeitpunkte von 0 bis 2π (Sinusperiode)
-        freq = np.random.uniform(0.8, 1.2)     # zufällige Frequenz zwischen 0.8 und 1.2. Das simuliert natürliche Variation (nicht jeder geht glecih schnell).
-        noise = np.random.normal(0, 0.15, t)
-        signal = np.sin(freq * time) + noise #sinuswelle + rauschen (gehen hat rythmischen takt)
+
+        # Create equally spaced time points
+        time = np.linspace(
+            0,
+            2 * np.pi,
+            t
+        )
+
+        # Random frequency variation
+        freq = np.random.uniform(
+            0.8,
+            1.2
+        )
+
+        noise = np.random.normal(
+            0,
+            0.15,
+            t
+        )
+
+        signal = np.sin(
+            freq * time
+        ) + noise
+
         data.append(signal)
+
     return np.array(data)
 
+
+# =======================
+# Class 2 - Waving
+# =======================
 
 def generate_class2(n, t):
     """
-    Klasse 2: Winken
-    → Kurze schnelle Ausschläge (höhere Frequenz, größere Amplitude)
+    Generate samples for Class 2 (Waving).
+
+    The signal contains faster oscillations and larger
+    amplitudes than the walking class, representing
+    rapid hand movements.
+
+    Parameters
+    ----------
+    n : int
+        Number of samples to generate.
+    t : int
+        Number of time steps per sample.
+
+    Returns
+    -------
+    np.ndarray
+        Generated signals.
     """
     data = []
+
     for _ in range(n):
-        time = np.linspace(0, 4 * np.pi, t) # diesmal zwei volle Perioden (4π statt 2π), weil Winken schneller ist.
-        freq = np.random.uniform(2.5, 3.5)     # höhere Frequenz als beim gehen
-        amp  = np.random.uniform(1.5, 2.5)     # größere Amplitude (Winken erzeugt hoehere Signalausschläge)
-        noise = np.random.normal(0, 0.2, t)
-        signal = amp * np.sin(freq * time) + noise # amplitude multipliziert die hoehe der Welle
+
+        # Two full periods for faster movement
+        time = np.linspace(
+            0,
+            4 * np.pi,
+            t
+        )
+
+        # Higher frequency than walking
+        freq = np.random.uniform(
+            2.5,
+            3.5
+        )
+
+        # Larger signal amplitude
+        amp = np.random.uniform(
+            1.5,
+            2.5
+        )
+
+        noise = np.random.normal(
+            0,
+            0.2,
+            t
+        )
+
+        signal = (
+            amp * np.sin(freq * time)
+            + noise
+        )
+
         data.append(signal)
+
     return np.array(data)
 
 
-# =======================================
-# Hauptfunktion - 3 Datenklassen erzeugen
-# =======================================
+# ======================================
+# Main Dataset Generation Function
+# ======================================
 
 def generate_data():
-    np.random.seed(42) #reproduzierbarkeit
-    
-    X0 = generate_class0(N_SAMPLES, TIMESTEPS)
-    X1 = generate_class1(N_SAMPLES, TIMESTEPS)
-    X2 = generate_class2(N_SAMPLES, TIMESTEPS)
-    
-    X = np.vstack([X0, X1, X2]) #stapelt 3 arrays untereinander, shape (300 samples, 50 zeitschritte)
-    y = np.array([0]*N_SAMPLES + [1]*N_SAMPLES + [2]*N_SAMPLES) # erzeugt die Labels: 100x die 0, 100x die 1, 100x die 2.
-    
+    """
+    Generate the complete synthetic dataset.
+
+    Creates three activity classes and combines them
+    into a single dataset with corresponding labels.
+
+    Returns
+    -------
+    X : np.ndarray
+        Generated signal data.
+    y : np.ndarray
+        Class labels.
+    """
+    np.random.seed(42)  # Reproducibility
+
+    X0 = generate_class0(
+        N_SAMPLES,
+        TIMESTEPS
+    )
+
+    X1 = generate_class1(
+        N_SAMPLES,
+        TIMESTEPS
+    )
+
+    X2 = generate_class2(
+        N_SAMPLES,
+        TIMESTEPS
+    )
+
+    # Combine all classes
+    X = np.vstack([
+        X0,
+        X1,
+        X2
+    ])
+
+    # Generate labels
+    y = np.array(
+        [0] * N_SAMPLES +
+        [1] * N_SAMPLES +
+        [2] * N_SAMPLES
+    )
+
     return X, y
 
 
 # =======================
 # Test
 # =======================
+
 if __name__ == "__main__":
+
     X, y = generate_data()
+
     print(f"X Shape: {X.shape}")
     print(f"y Shape: {y.shape}")
-    print(f"Klassen: {np.unique(y)}")
+    print(f"Classes: {np.unique(y)}")

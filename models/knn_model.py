@@ -1,75 +1,114 @@
-import numpy as np
-from sklearn.neighbors import KNeighborsClassifier #sklearns fertige knn implementierung
-from sklearn.metrics import accuracy_score # berechnet wie viel prozent der Vorhersagen korrekt waren
-import time # messen der Laufzeit, wichtig für Algorithmenvergleich mit anderen modellen
+"""
+K-NN Model Module for HAR (Human Activity Recognition)
 
+This module implements a k-Nearest Neighbors classifier for human activity
+recognition from extracted features.
+
+k-NN (k-Nearest Neighbors) Overview:
+The idea is simple: when a new sample needs to be classified, k-NN looks at
+the k training samples that are most similar and takes the most common class
+among them.
+
+Example with k=3:
+New sample arrives
+→ The 3 most similar training samples are: Class 1, Class 1, Class 2
+→ Class 1 wins (2 out of 3)
+→ Prediction: Class 1
 """
-k-NN = k-Nearest Neighbors (k nächste Nachbarn)
-Die Idee ist simpel: Wenn ein neues Sample klassifiziert werden soll, 
-schaut k-NN welche k Trainingssamples am ähnlichsten sind und nimmt die häufigste Klasse davon.
-Beispiel mit k=3:
-Neues Sample kommt rein
-→ Die 3 ähnlichsten Trainingssamples sind: Klasse 1, Klasse 1, Klasse 2
-→ Klasse 1 gewinnt (2 von 3)
-→ Vorhersage: Klasse 1
-"""
+
+import numpy as np
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score
+import time
+
 
 class KNNModel:
+    """
+    K-Nearest Neighbors classifier for HAR classification.
 
-    def __init__(self, k=5, metric = 'manhattan' ): # Konstruktor, k=5 ist stnadardwert
+    This model uses distance-based similarity to classify new samples
+    based on the majority class of their k nearest neighbors.
+    """
+
+    def __init__(self, k=5, metric='manhattan'):
+        """
+        Initialize the K-NN model with specified hyperparameters.
+
+        Args:
+            k (int): Number of nearest neighbors to consider
+            metric (str): Distance metric ('euclidean' or 'manhattan')
+        """
         self.k = k
-        self.model = KNeighborsClassifier(n_neighbors = k, metric = metric)
+        self.model = KNeighborsClassifier(n_neighbors=k, metric=metric)
         self.training_time = None
-        self.inference_time = None # zeit benoetigt um eine vorhersage zu machen
-
-
-
-    ##################
-    # Training
-    ##################
+        self.inference_time = None
 
     def train(self, X_train, y_train):
-        start = time.time() #gibt aktuelle zeit in sekunden zurucek (timer fuer training starten)
-        self.model.fit(X_train, y_train) # trainingsprozess
+        """
+        Train the K-NN model on the provided data.
+
+        Args:
+            X_train (np.ndarray): Training features
+            y_train (np.ndarray): Training labels
+        """
+        start = time.time()
+        self.model.fit(X_train, y_train)
         self.training_time = time.time() - start
-        print(f"K-NN Training abgeschlossen in {self.training_time:.4f} Sekunden")
 
-
-    ##################
-    # Vorhersage
-    ##################
+        print(f"K-NN Training completed in {self.training_time:.4f} seconds")
 
     def predict(self, X_test):
+        """
+        Generate predictions for test data.
+
+        Args:
+            X_test (np.ndarray): Test features
+
+        Returns:
+            np.ndarray: Predicted class labels
+        """
         start = time.time()
         predictions = self.model.predict(X_test)
         self.inference_time = time.time() - start
-        print(f"k-NN Vorhersage abgeschlossen in {self.inference_time:.4f} Sekunden")
-        return predictions
-    
 
-    ##################
-    # Auswertung
-    ##################
+        print(f"K-NN Inference completed in {self.inference_time:.4f} seconds")
+
+        return predictions
 
     def evaluate(self, X_test, y_test, X_train=None, y_train=None):
+        """
+        Evaluate model performance on test data.
+
+        Args:
+            X_test (np.ndarray): Test features
+            y_test (np.ndarray): True labels
+            X_train (np.ndarray, optional): Training features for train accuracy
+            y_train (np.ndarray, optional): Training labels for train accuracy
+
+        Returns:
+            tuple: (accuracy, predictions)
+                - accuracy (float): Test accuracy as a fraction
+                - predictions (np.ndarray): Predicted class labels
+        """
         predictions = self.predict(X_test)
-        accuracy = accuracy_score(y_test, predictions) # vergleicht echte labels mit vorhersagen, gibt wert zwischen 0 und 1 zurueck
-        print(f"k-NN Accuracy: {accuracy *100:.2f}%")
-        
+        accuracy = accuracy_score(y_test, predictions)
+
+        print(f"K-NN Accuracy: {accuracy * 100:.2f}%")
+
+        # Calculate training accuracy if training data is provided
         if X_train is not None:
-            train_preds = self.model.predict(X_train)
-            train_acc = accuracy_score(y_train, train_preds)
-            print(f"k-NN Train Accuracy: {train_acc * 100:.2f}%")
+            train_predictions = self.model.predict(X_train)
+            train_accuracy = accuracy_score(y_train, train_predictions)
+            print(f"K-NN Train Accuracy: {train_accuracy * 100:.2f}%")
 
         return accuracy, predictions
-    
 
-###################
-# Test
-###################
 
+# Test the K-NN model with different hyperparameters
 if __name__ == "__main__":
-    import sys, os
+    import sys
+    import os
+
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from data.load_real_data import load_real_data
     from preprocessing.preprocess import preprocess
@@ -77,16 +116,21 @@ if __name__ == "__main__":
     from sklearn.neighbors import KNeighborsClassifier
     from sklearn.metrics import accuracy_score
 
+    # Load and preprocess data
     X, y, encoder = load_real_data()
     X_train, X_test, y_train, y_test, scaler = preprocess(X, y)
-    F_train = extract_features(X_train)
-    F_test  = extract_features(X_test)
 
-    print(f"\n{'k':>4} {'Metrik':<12} {'Accuracy':>10}")
+    # Extract features
+    F_train = extract_features(X_train)
+    F_test = extract_features(X_test)
+
+    # Test different hyperparameter combinations
+    print(f"\n{'k':>4} {'Metric':<12} {'Accuracy':>10}")
     print("-" * 30)
+
     for metric in ['euclidean', 'manhattan']:
         for k in [1, 3, 5, 7, 10, 15]:
             clf = KNeighborsClassifier(n_neighbors=k, metric=metric)
             clf.fit(F_train, y_train)
             acc = accuracy_score(y_test, clf.predict(F_test))
-            print(f"{k:>4} {metric:<12} {acc*100:>9.2f}%")
+            print(f"{k:>4} {metric:<12} {acc * 100:>9.2f}%")

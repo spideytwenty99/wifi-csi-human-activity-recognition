@@ -1,59 +1,83 @@
+"""
+Feature Extraction Module for HAR (Human Activity Recognition)
+
+This module extracts statistical features from CSI time series data
+to prepare it for machine learning models like SVM and k-NN.
+
+After preprocessing, data has shape (n_samples, 50) - raw time steps per sample.
+SVM and k-NN cannot handle raw time series data well. They require
+meaningful numeric values per sample - called features.
+
+For each signal, five statistical features are extracted:
+    - Mean: Average signal value
+    - Variance: How much the signal fluctuates
+    - Maximum: Largest amplitude
+    - Minimum: Smallest amplitude
+    - Energy: Sum of squared values (total signal strength)
+
+Each sample with 50 timesteps becomes a vector of 5 numbers per subcarrier.
+This is called a feature vector.
+"""
+
 import numpy as np
 
-"""
-nach dem preprocessing haben unsere Daten die Form (300, 50) — also 50 rohe Zeitschritte pro Sample. 
-Das Problem: SVM und k-NN können nicht gut mit rohen Zeitreihen umgehen. 
-Die brauchen einzelne aussagekräftige Zahlen pro Sample — sogenannte Features.
-Wir extrahieren aus jedem Signal 5 statistische Features:
-    Mittelwert   → wie hoch ist das Signal im Durchschnitt?
-    Varianz      → wie stark schwankt es?
-    Maximum      → größter Ausschlag
-    Minimum      → kleinster Ausschlag
-    Energie      → Summe der quadrierten Werte (Gesamtstärke)
-
-    Ein Sample mit 50 Zeitschritten wird also zu einem Vektor mit 5 Zahlen. Das nennt man Feature Vector.
-"""
 
 def extract_features(X):
     """
-    Extrahiert statistische Features aus jeder Zeitreihe.
-    
-    Input:  X shape (n_samples, 500, 256)
-    Output: F shape (n_samples, 1280) - jedes sample hat je 1280 features
+    Extract statistical features from each time series sample.
+
+    For each of the 256 subcarriers, five features are computed:
+    mean, variance, maximum, minimum, and energy.
+
+    Args:
+        X (np.ndarray): Input data with shape (n_samples, 500, 256)
+                       where 500 is timesteps and 256 is subcarriers
+
+    Returns:
+        np.ndarray: Feature matrix with shape (n_samples, 1280)
+                   where 1280 = 256 subcarriers * 5 features per subcarrier
     """
-    features = [] # Behälter für alle samples
-    
+    features = []
 
-    for sample in X: # geht durch jedes der 300 zeitreihen einzeln
-        sample_features = [] # temporärer Behälter für ein Sample
-        for i in range(256): # durvch alle subcarrier des jeweiligen samples iterieren
+    # Iterate through each sample
+    for sample in X:
+        sample_features = []
+
+        # Iterate through all 256 subcarriers
+        for i in range(256):
             subcarrier = sample[:, i]
-            mittelwert = np.mean(subcarrier) # durchschnitt aller 256 werte
-            varianz    = np.var(subcarrier) # wie stark streuen werte? bei keiner Bewegung klein, bei Winken bspw groß
-            maximum    = np.max(subcarrier)
-            minimum    = np.min(subcarrier)
-            energie    = np.sum(subcarrier ** 2) # Signalenergie
 
-            sample_features.extend([mittelwert, varianz, maximum, minimum, energie])
+            # Calculate statistical features
+            mean_value = np.mean(subcarrier)
+            variance = np.var(subcarrier)
+            maximum = np.max(subcarrier)
+            minimum = np.min(subcarrier)
+            energy = np.sum(subcarrier ** 2)
 
-        features.append(sample_features) # fuegt alles dem feature vektor hinzu
+            # Append all features to the sample's feature vector
+            sample_features.extend([mean_value, variance, maximum, minimum, energy])
+
+        features.append(sample_features)
 
     return np.array(features)
 
 
-##############
-# Test
-##############
-
+# Test the feature extraction function
 if __name__ == "__main__":
-    import sys, os
+    import sys
+    import os
+
     sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from data.synthetic_data import generate_data
 
+    # Generate synthetic data
     X, y = generate_data()
+
+    # Extract features
     F = extract_features(X)
 
-    print(f"X Shape vorher: {X.shape}")
-    print(f"F Shape nachher: {F.shape}")
-    print(f"\nBeispiel Feature Vector (Sample 0): {F[0]}")
-    print(f"Bedeutung: [Mittelwert, Varianz, Max, Min, Energie]")
+    # Display results
+    print(f"X Shape before: {X.shape}")
+    print(f"F Shape after: {F.shape}")
+    print(f"\nExample Feature Vector (Sample 0): {F[0]}")
+    print(f"Meaning: [Mean, Variance, Max, Min, Energy] repeated for all 256 subcarriers")

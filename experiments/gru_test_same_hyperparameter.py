@@ -1,84 +1,110 @@
-import numpy as np
-import time
-import matplotlib.pyplot as plt
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import accuracy_score
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import GRU, Dense, Input
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping
-from data.load_real_data import load_real_data
-from preprocessing.preprocess import preprocess
-
 """
 GRU (Gated Recurrent Unit)
 
-GRU ist eine vereinfachte Version des LSTM.
-Auch GRU verarbeitet Sequenzen und merkt sich Informationen über mehrere
-Zeitschritte hinweg.
+A GRU is a simplified version of an LSTM network.
 
-Im Gegensatz zum LSTM besitzt GRU keinen separaten Cell State.
-Es verwendet nur einen Hidden State und zwei Gates:
+Like LSTMs, GRUs are designed to process sequential data
+and retain information across multiple time steps.
 
-  Update Gate → Entscheidet, wie viel alte Information behalten wird.
-  Reset Gate  → Entscheidet, wie viel alte Information vergessen wird.
+Unlike an LSTM, a GRU does not maintain a separate cell state.
+Instead, it uses a single hidden state together with two gates:
 
-Dadurch besitzt GRU weniger Parameter als LSTM,
-trainiert meistens schneller und erreicht häufig ähnliche Genauigkeiten.
+    Update Gate
+        Controls how much information from previous
+        time steps should be retained.
+
+    Reset Gate
+        Controls how much past information should be ignored.
+
+Because GRUs contain fewer parameters than LSTMs,
+they often train faster while achieving comparable
+classification performance.
+
+Note:
+    This implementation uses the same hyperparameters
+    as the LSTM model to enable a fair comparison.
 """
 
+import time
+
+import matplotlib.pyplot as plt
+import numpy as np
+import tensorflow as tf
+
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.layers import Dense, GRU, Input
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.optimizers import Adam
+
+from data.load_real_data import load_real_data
+from preprocessing.preprocess import preprocess
+
+
+# Set random seed for reproducibility
 tf.random.set_seed(42)
 
 
 class PrintEvery10Epochs(tf.keras.callbacks.Callback):
-    """Print training metrics every 10 epochs."""
+    """
+    Display training progress every 10 epochs.
+    """
+
     def on_epoch_end(self, epoch, logs=None):
         if (epoch + 1) % 10 == 0:
-            total = self.params['epochs']
-            print(f"Epoch {epoch+1}/{total} - "
-                  f"Train Loss: {logs['loss']:.4f} | "
-                  f"Val Loss: {logs['val_loss']:.4f} | "
-                  f"Train Acc: {logs['accuracy']*100:.1f}% | "
-                  f"Val Acc: {logs['val_accuracy']*100:.1f}%")
+            total = self.params["epochs"]
+
+            print(
+                f"Epoch {epoch + 1}/{total} - "
+                f"Train Loss: {logs['loss']:.4f} | "
+                f"Val Loss: {logs['val_loss']:.4f} | "
+                f"Train Acc: {logs['accuracy'] * 100:.1f}% | "
+                f"Val Acc: {logs['val_accuracy'] * 100:.1f}%"
+            )
 
 
 class GRUModel:
+    """
+    GRU-based classifier for CSI activity recognition.
+    """
 
-    def __init__(self,
-                 input_shape=(500, 256),
-                 hidden_size=64,
-                 num_classes=5,
-                 learning_rate=0.005,
-                 epochs=200,
-                 batch_size=32,
-                 patience=20):
-
+    def __init__(
+        self,
+        input_shape=(500, 256),
+        hidden_size=64,
+        num_classes=5,
+        learning_rate=0.005,
+        epochs=200,
+        batch_size=32,
+        patience=20
+    ):
         self.epochs = epochs
         self.batch_size = batch_size
         self.patience = patience
+
         self.training_time = None
         self.inference_time = None
         self.history = None
 
-        # Build model
+        # Build the GRU model
         self.model = Sequential([
             Input(shape=input_shape),
             GRU(hidden_size),
-            Dense(num_classes, activation='softmax')
+            Dense(num_classes, activation="softmax")
         ])
 
         self.model.compile(
             optimizer=Adam(learning_rate=learning_rate),
-            loss='sparse_categorical_crossentropy',
-            metrics=['accuracy']
+            loss="sparse_categorical_crossentropy",
+            metrics=["accuracy"]
         )
 
-    #################
-    # Training
-    #################
-
     def train(self, X_train, y_train):
+        """
+        Train the GRU model using an internal validation split.
+        """
 
         X_tr, X_val, y_tr, y_val = train_test_split(
             X_train,
@@ -102,94 +128,164 @@ class GRUModel:
             epochs=self.epochs,
             batch_size=self.batch_size,
             verbose=0,
-            callbacks=[PrintEvery10Epochs(), early_stop]
+            callbacks=[
+                PrintEvery10Epochs(),
+                early_stop
+            ]
         )
 
         self.training_time = time.time() - start
 
-        actual_epochs = len(self.history.history["loss"])
+        actual_epochs = len(
+            self.history.history["loss"]
+        )
 
         if actual_epochs < self.epochs:
-            print(f"\nEarly Stopping bei Epoch {actual_epochs}")
+            print(
+                f"\nEarly stopping triggered "
+                f"at epoch {actual_epochs}"
+            )
 
-        print(f"GRU Training abgeschlossen in {self.training_time:.4f} Sekunden")
-
-    #################
-    # Plot History
-    #################
+        print(
+            f"GRU training completed in "
+            f"{self.training_time:.4f} seconds"
+        )
 
     def plot_history(self):
+        """
+        Plot training and validation loss and accuracy.
+        """
 
-        h = self.history.history
-        epochs = range(1, len(h["loss"]) + 1)
+        history = self.history.history
+        epochs = range(
+            1,
+            len(history["loss"]) + 1
+        )
 
-        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 4))
+        fig, (ax1, ax2) = plt.subplots(
+            1,
+            2,
+            figsize=(12, 4)
+        )
 
-        ax1.plot(epochs, h["loss"], label="Train Loss")
-        ax1.plot(epochs, h["val_loss"], label="Val Loss")
-        ax1.set_title("Train Loss vs Val Loss")
+        # Loss curves
+        ax1.plot(
+            epochs,
+            history["loss"],
+            label="Training Loss"
+        )
+
+        ax1.plot(
+            epochs,
+            history["val_loss"],
+            label="Validation Loss"
+        )
+
+        ax1.set_title(
+            "Training vs Validation Loss"
+        )
+
         ax1.set_xlabel("Epoch")
         ax1.legend()
 
-        ax2.plot(epochs, h["accuracy"], label="Train Accuracy")
-        ax2.plot(epochs, h["val_accuracy"], label="Val Accuracy")
-        ax2.set_title("Train Accuracy vs Val Accuracy")
+        # Accuracy curves
+        ax2.plot(
+            epochs,
+            history["accuracy"],
+            label="Training Accuracy"
+        )
+
+        ax2.plot(
+            epochs,
+            history["val_accuracy"],
+            label="Validation Accuracy"
+        )
+
+        ax2.set_title(
+            "Training vs Validation Accuracy"
+        )
+
         ax2.set_xlabel("Epoch")
         ax2.legend()
 
         plt.tight_layout()
-        plt.savefig("../results/gru_same_hyperparemter_LSTM.png", dpi=150)
+
+        plt.savefig(
+            "../results/gru_same_hyperparameter_lstm.png",
+            dpi=150
+        )
+
         plt.close()
 
-        print("Training Kurven gespeichert: gru_training_curves.png")
-
-    #################
-    # Prediction
-    #################
+        print(
+            "Training curves saved: "
+            "gru_same_hyperparameter_lstm.png"
+        )
 
     def predict(self, X_test):
+        """
+        Generate predictions for the test set.
+        """
 
         start = time.time()
 
-        raw = self.model.predict(X_test, verbose=0)
+        probabilities = self.model.predict(
+            X_test,
+            verbose=0
+        )
 
-        self.inference_time = time.time() - start
+        self.inference_time = (
+            time.time() - start
+        )
 
-        print(f"GRU Vorhersage abgeschlossen in {self.inference_time:.4f} Sekunden")
+        print(
+            f"GRU inference completed in "
+            f"{self.inference_time:.4f} seconds"
+        )
 
-        return np.argmax(raw, axis=1)
-
-    #################
-    # Evaluation
-    #################
+        return np.argmax(
+            probabilities,
+            axis=1
+        )
 
     def evaluate(self, X_test, y_test):
+        """
+        Evaluate the model and return accuracy
+        and predicted labels.
+        """
 
         predictions = self.predict(X_test)
 
-        accuracy = accuracy_score(y_test, predictions)
+        accuracy = accuracy_score(
+            y_test,
+            predictions
+        )
 
-        print(f"GRU Accuracy: {accuracy * 100:.2f}%")
+        print(
+            f"GRU Accuracy: "
+            f"{accuracy * 100:.2f}%"
+        )
 
         return accuracy, predictions
 
-############################################################
-# Main
-############################################################
 
 if __name__ == "__main__":
 
     print("=" * 60)
-    print("                  GRU Model")
+    print("GRU Model")
     print("=" * 60)
+
     # Load dataset
     X, y, encoder = load_real_data()
 
+    # Preprocess dataset
+    X_train, X_test, y_train, y_test, scaler = preprocess(
+        X,
+        y
+    )
 
-    X_train, X_test, y_train, y_test, scaler = preprocess(X, y)
-
-
-    # Create model
+    # Use the same hyperparameters as the LSTM model
+    # to ensure a fair comparison.
     model = GRUModel(
         input_shape=(500, 256),
         hidden_size=64,
@@ -200,18 +296,36 @@ if __name__ == "__main__":
         patience=20
     )
 
-    # Train
-    model.train(X_train, y_train)
+    # Train model
+    model.train(
+        X_train,
+        y_train
+    )
 
-    # Plot training curves
+    # Plot training history
     model.plot_history()
 
-    # Evaluate
-    accuracy, predictions = model.evaluate(X_test, y_test)
+    # Evaluate model
+    accuracy, predictions = model.evaluate(
+        X_test,
+        y_test
+    )
 
     print("\n" + "=" * 60)
     print("Final Results")
     print("=" * 60)
-    print(f"Test Accuracy : {accuracy * 100:.2f}%")
-    print(f"Training Time : {model.training_time:.2f} seconds")
-    print(f"Inference Time: {model.inference_time:.4f} seconds")
+
+    print(
+        f"Test Accuracy : "
+        f"{accuracy * 100:.2f}%"
+    )
+
+    print(
+        f"Training Time : "
+        f"{model.training_time:.2f} seconds"
+    )
+
+    print(
+        f"Inference Time: "
+        f"{model.inference_time:.4f} seconds"
+    )

@@ -1,6 +1,15 @@
+"""
+CSI Signal Comparison and Analysis Script
+
+This script visualizes and compares Wi-Fi CSI amplitude data across all five
+activity classes using signal plots, boxplots, and histograms to understand
+the differences in signal characteristics between activities.
+"""
+
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
+
 
 # Project root directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -17,63 +26,50 @@ files = {
     "Walking": "Walking_10.csv"
 }
 
-# ======================================================
-# SIGNAL COMPARISON
-# ======================================================
 
+# Plot signal comparison for all activities (Subcarrier_64)
 plt.figure(figsize=(12, 12))
 
 plot_number = 1
 
 for activity, filename in files.items():
-
     plt.subplot(5, 1, plot_number)
 
     file_path = os.path.join(dataset_path, filename)
-
     df = pd.read_csv(file_path)
 
     signal = df["Subcarrier_64"]
+    plt.plot(signal, linewidth=2)
 
-    plt.plot(signal)
-
-    plt.title(activity)
+    plt.title(activity, fontweight='bold')
     plt.xlabel("Time Sample")
     plt.ylabel("Amplitude")
 
     plt.ylim(0, 1500)
-
-    plt.grid(True)
+    plt.grid(True, alpha=0.3)
 
     plot_number += 1
 
 plt.tight_layout()
 plt.show()
 
-# ======================================================
-# BOXPLOT
-# ======================================================
 
+# Plot boxplot to compare amplitude distributions across activities
 boxplot_data = []
 activity_names = []
 
 for activity, filename in files.items():
-
     file_path = os.path.join(dataset_path, filename)
-
     df = pd.read_csv(file_path)
 
     signal = df["Subcarrier_64"]
-
     boxplot_data.append(signal)
     activity_names.append(activity)
 
 plt.figure(figsize=(10, 6))
-
 plt.boxplot(boxplot_data)
 
-plt.title("Comparison of Subcarrier_64")
-
+plt.title("Comparison of Subcarrier_64 Across Activities", fontweight='bold')
 plt.xlabel("Activity")
 plt.ylabel("Amplitude")
 
@@ -82,25 +78,20 @@ plt.xticks(
     activity_names
 )
 
-plt.grid(True)
-
+plt.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.show()
 
-# ======================================================
-# HISTOGRAMS
-# ======================================================
 
+# Plot histograms to examine amplitude distributions per activity
 plt.figure(figsize=(12, 8))
 
 plot_number = 1
 
 for activity, filename in files.items():
-
     plt.subplot(3, 2, plot_number)
 
     file_path = os.path.join(dataset_path, filename)
-
     df = pd.read_csv(file_path)
 
     signal = df["Subcarrier_64"]
@@ -108,26 +99,19 @@ for activity, filename in files.items():
     plt.hist(
         signal,
         bins=30,
-        edgecolor="black"
+        edgecolor="black",
+        alpha=0.7
     )
 
-    plt.title(activity)
+    plt.title(activity, fontweight='bold')
     plt.xlabel("Amplitude")
     plt.ylabel("Frequency")
 
     plt.xlim(0, 1500)
+    plt.grid(True, alpha=0.3)
 
     plot_number += 1
 
 plt.tight_layout()
 plt.show()
 
-# The boxplot of Subcarrier 64 shows noticeable differences in amplitude
-# distributions across activities. Walking exhibits the highest median
-# amplitude and the largest variability, while Sitting and Standing have
-# comparatively lower medians and similar distributions.
-
-# Histograms of Subcarrier 64 reveal positively skewed amplitude distributions.
-# These observations support the application of feature scaling before
-# training machine learning models. Standardization (StandardScaler) was
-# therefore applied for the SVM.

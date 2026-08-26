@@ -1,35 +1,42 @@
+"""
+CSI Signal Visualization Script
+
+This script visualizes WiFi CSI (Channel State Information) amplitude data
+from a single CSV file, including single subcarrier plots, multiple subcarrier
+overlays, and a full heatmap of all 256 subcarriers.
+"""
+
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
 
+
 # Project root directory
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-# Select one CSV file
+# Select one CSV file for visualization
 file_path = os.path.join(BASE_DIR, "data", "csv", "Walking_100.csv")
 
-# Read CSV
+# Read CSV file
 df = pd.read_csv(file_path)
 
-# --------------------------------------------------
-# Plot one subcarrier
-# --------------------------------------------------
+
+# Plot a single subcarrier to examine its temporal pattern
 signal = df["Subcarrier_1"]
 
 plt.figure(figsize=(12, 5))
-plt.plot(signal)
+plt.plot(signal, linewidth=2)
 
-plt.title("Walking - Subcarrier 1")
+plt.title("Walking - Subcarrier 1", fontweight='bold')
 plt.xlabel("Time Sample")
 plt.ylabel("Amplitude")
 
-plt.grid(True)
+plt.grid(True, alpha=0.3)
 plt.tight_layout()
 plt.show()
 
-# --------------------------------------------------
-# Plot multiple subcarriers
-# --------------------------------------------------
+
+# Plot multiple subcarriers to compare their patterns
 subcarriers = [
     "Subcarrier_1",
     "Subcarrier_64",
@@ -41,36 +48,36 @@ subcarriers = [
 plt.figure(figsize=(14, 6))
 
 for column in subcarriers:
-    plt.plot(df[column], label=column)
+    plt.plot(df[column], label=column, linewidth=2)
 
-plt.title("Walking - Multiple Subcarriers")
+plt.title("Walking - Multiple Subcarriers", fontweight='bold')
 plt.xlabel("Time Sample")
 plt.ylabel("Amplitude")
 plt.legend()
-plt.grid(True)
+plt.grid(True, alpha=0.3)
 
 plt.tight_layout()
 plt.show()
 
-# --------------------------------------------------
-# Heatmap
-# --------------------------------------------------
+
+# Plot heatmap showing all 256 subcarriers over time
 plt.figure(figsize=(14, 8))
 
 plt.imshow(
-    df.T,
-    aspect="auto",
-    origin="lower",
-    cmap="viridis",
-    interpolation="nearest"
+    df.T,                          # Transpose: subcarriers as rows, time as columns
+    aspect="auto",                 # Automatically adjust aspect ratio
+    origin="lower",                # Start from bottom
+    cmap="viridis",                # Color map for amplitude values
+    interpolation="nearest"        # No interpolation between pixels
 )
 
 plt.colorbar(label="Amplitude")
 
-plt.title("CSI Amplitude Heatmap - Walking")
+plt.title("CSI Amplitude Heatmap - Walking", fontweight='bold')
 plt.xlabel("Time Sample")
 plt.ylabel("Subcarrier")
 
+# Set y-axis ticks to show selected subcarrier indices
 plt.yticks(
     [0, 63, 127, 191, 255],
     [1, 64, 128, 192, 256]
@@ -79,14 +86,3 @@ plt.yticks(
 plt.tight_layout()
 plt.show()
 
-# The visualization of multiple CSI subcarriers shows that different
-# subcarriers exhibit different amplitude ranges and temporal variations.
-# This indicates that human movement affects the WiFi channel differently
-# across the frequency spectrum. Therefore, all 256 subcarriers are retained
-# for subsequent preprocessing and model training.
-
-# CSI amplitude heatmap for a walking activity. The horizontal axis represents
-# time samples, while the vertical axis represents the 256 CSI subcarriers.
-# Color intensity corresponds to the measured amplitude. Distinct temporal and
-# spectral patterns can be observed, indicating that human movement affects
-# different subcarriers differently.
