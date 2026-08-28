@@ -105,6 +105,16 @@ als Vergleich zu LSTM-basierten Ansätzen.
 → Begründung: Diente als ergänzende technische Referenz zur Erklärung der GRU-Architektur. Beschreibt den Aufbau von
 Update Gate und Reset Gate sowie die Unterschiede zwischen GRU und LSTM.
 
+**[11] Kang et al. (2025) — Attention-GRU für Wi-Fi CSI**
+> Kang, H., Kim, D., & Toh, K.-A. (2025).
+> *Human Activity Recognition Through Augmented WiFi CSI Signals by Lightweight Attention-GRU.*
+> https://doi.org/10.3390/s25051547
+
+→ Begründung: Direkt einschlägige Referenz für GRU-Netzwerke auf Wi-Fi-CSI-Daten. Die Autoren evaluieren ihr Modell
+unter anderem auf demselben Nexmon-Datensatz von Schäfer et al., der auch in diesem Projekt verwendet wird, und
+liefern damit direkte Vergleichswerte für Kapitel 5. Zudem zeigt die Arbeit den starken Einfluss von Data
+Augmentation auf kleinen CSI-Datensätzen.
+
 ---
 ---
 
