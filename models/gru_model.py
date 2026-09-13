@@ -48,7 +48,7 @@ class GRUModel:
     """
     GRU Model for HAR classification.
 
-    This model uses three stacked GRU layers to process time series data
+    This model uses two stacked GRU layers to process time series data
     and capture temporal dependencies for activity recognition.
     """
 
@@ -68,7 +68,7 @@ class GRUModel:
 
         Args:
             input_shape (tuple): Shape of input data (timesteps, features)
-            hidden_size (int): Number of GRU units in the second and third layers
+            hidden_size (int): Number of GRU units in the second layer
             num_classes (int): Number of output classes
             learning_rate (float): Learning rate for Adam optimizer
             epochs (int): Maximum number of training epochs
@@ -85,7 +85,7 @@ class GRUModel:
         self.inference_time = None
         self.history = None
 
-        # Build the model architecture with three GRU layers
+        # Build the model architecture with two stacked GRU layers
         self.model = Sequential([
             Input(shape=input_shape),
 
@@ -94,10 +94,11 @@ class GRUModel:
             GRU(128, dropout=self.dropout, return_sequences=True),
 
             # Second GRU layer with hidden_size units
-            GRU(hidden_size, dropout=self.dropout, return_sequences=True),
-
-            # Third GRU layer with hidden_size units
             GRU(hidden_size, dropout=self.dropout),
+
+            # Third GRU layer with hidden_size units (not used in the
+            # reported experiments; see experiments/final_Gru.py)
+            # GRU(hidden_size, dropout=self.dropout),
 
             # Output layer
             Dense(num_classes, activation="softmax")
@@ -109,20 +110,6 @@ class GRUModel:
             loss="sparse_categorical_crossentropy",
             metrics=["accuracy"]
         )
-
-        # Alternative architecture (commented for reference)
-        # self.model = Sequential([
-        #     Input(shape=input_shape),
-        #     GRU(128, dropout=self.dropout, return_sequences=True),
-        #     GRU(64),
-        #     Dense(num_classes, activation="softmax")
-        # ])
-        #
-        # self.model.compile(
-        #     optimizer=Adam(learning_rate=learning_rate),
-        #     loss="sparse_categorical_crossentropy",
-        #     metrics=["accuracy"]
-        # )
 
     def train(self, X_train, y_train):
         """
