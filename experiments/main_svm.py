@@ -3,6 +3,10 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from data.load_real_data import load_real_data
 from features.feature_extraction import extract_features
 from models.svm_model import SVMModel

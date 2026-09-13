@@ -11,6 +11,10 @@ import pandas as pd
 import tensorflow as tf
 from numpy import random
 import numpy as np
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from data.load_real_data import load_real_data
 from preprocessing.preprocess import preprocess
 from models.gru_model import GRUModel

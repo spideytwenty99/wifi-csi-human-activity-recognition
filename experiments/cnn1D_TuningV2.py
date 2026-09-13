@@ -48,6 +48,10 @@ tf.random.set_seed(42)
 
 # LOAD AND PREPROCESS DATA
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from data.load_real_data import load_real_data
 from preprocessing.preprocess import preprocess
 

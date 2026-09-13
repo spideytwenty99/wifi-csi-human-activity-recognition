@@ -13,6 +13,9 @@ from sklearn.metrics import (
     confusion_matrix,
     ConfusionMatrixDisplay
 )
+import sys
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 from data.load_real_data import load_real_data
 from models.gru_model import GRUModel
 from preprocessing.preprocess import preprocess

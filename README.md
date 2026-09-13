@@ -86,7 +86,7 @@ The project expects all CSV files to be located in this directory before running
 ### Deep Learning
 - CNN
 - LSTM
-- GRU
+- GRU (trained separately via `experiments/final_Gru.py`)
 - CNN + LSTM
 - CNN + BiLSTM
 
@@ -95,7 +95,7 @@ The project expects all CSV files to be located in this directory before running
 ## 📂 Project Structure
 
 ```text
-wifi_activity_recognition/
+wifi-csi-human-activity-recognition/
 
 ├── data/
 ├── evaluation/
@@ -119,23 +119,53 @@ wifi_activity_recognition/
 Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/wifi-activity-recognition.git
+git clone https://github.com/spideytwenty99/wifi-csi-human-activity-recognition.git
+cd wifi-csi-human-activity-recognition
 ```
 
-Install the required packages
+All reported results were produced with **Python 3.12**. The pinned package
+versions require Python 3.11 or newer — on older interpreters the installation
+fails with `No matching distribution found`.
+
+Create a virtual environment and install the required packages
 
 ```bash
+python3.12 -m venv venv
+source venv/bin/activate      # macOS / Linux
+venv\Scripts\activate         # Windows
 pip install -r requirements.txt
 ```
+
+Download the dataset as described under [Dataset Availability](#dataset-availability)
+and place the CSV files in `data/csv/`. The dataset is **not** part of this
+repository, and the pipeline will not run without it.
 
 ---
 
 ## ▶️ Running the Project
 
-Run the main script
+All commands must be run from the repository root, because the data path is
+resolved relative to the working directory.
+
+Run the model comparison — k-NN, SVM, LSTM, CNN, CNN-LSTM and CNN-BiLSTM.
+Metrics and figures are written to `results/`.
 
 ```bash
 python main.py
+```
+
+Run the stacked GRU. It is not part of `main.py` and has to be started
+separately.
+
+```bash
+python experiments/final_Gru.py
+```
+
+Optional — the hyperparameter searches behind the reported configurations:
+
+```bash
+python experiments/cnn1D_TuningV2.py   # CNN grid search
+python experiments/main_gru.py         # GRU grid search
 ```
 
 ---
