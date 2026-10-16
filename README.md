@@ -197,7 +197,11 @@ Models are evaluated using:
 - Confusion Matrix
 
 ---
+##Authors
+-Saurabh ([@spideytwenty99](https://github.com/spideytwenty99)) — CNN and GRU models, SVM pipeline, evaluation
+-John Grosch ([@johngrs](https://github.com/johngrs)) — CNN + LSTM and CNN + BiLSTM models
 
+---
 ## 📄 License
 
 This repository is intended for educational and research purposes.
